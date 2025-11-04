@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar & Spell Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .text-area-container {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #inputText {
+            min-height: 150px;
+        }
+
+        #outputText {
+            min-height: 150px;
+            background-color: #f8f9fa;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #checkBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #checkBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #checkBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #clearBtn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        #clearBtn:hover {
+            background: #e0e0e0;
+        }
+
+        #copyBtn {
+            background: #28a745;
+            color: white;
+        }
+
+        #copyBtn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .stats.show {
+            display: block;
+        }
+
+        .stat-item {
+            display: inline-block;
+            margin-right: 20px;
+            color: #666;
+        }
+
+        .stat-item strong {
+            color: #667eea;
+        }
+
+        .issues {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .issues.show {
+            display: block;
+        }
+
+        .issue-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .issue-message {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+
+        .issue-suggestions {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            display: none;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✍️ Grammar & Spell Checker</h1>
+        <p class="subtitle">Fix your grammar and spelling mistakes instantly</p>
+
+        <div class="error" id="errorMsg"></div>
+        <div class="success" id="successMsg"></div>
+
+        <div class="text-area-container">
+            <label for="inputText">Enter your text:</label>
+            <textarea id="inputText" placeholder="Type or paste your text here..."></textarea>
+        </div>
+
+        <div class="button-container">
+            <button id="checkBtn">🔍 Check & Fix</button>
+            <button id="clearBtn">🗑️ Clear</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Checking your text...</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <span class="stat-item">
+                <strong id="spellingCount">0</strong> spelling fixes
+            </span>
+            <span class="stat-item">
+                <strong id="grammarCount">0</strong> grammar issues
+            </span>
+        </div>
+
+        <div class="issues" id="issues">
+            <h3>Issues Found:</h3>
+            <div id="issuesList"></div>
+        </div>
+
+        <div class="text-area-container">
+            <label for="outputText">Corrected text:</label>
+            <textarea id="outputText" readonly></textarea>
+        </div>
+
+        <button id="copyBtn" style="width: 100%;">📋 Copy Corrected Text</button>
+    </div>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const checkBtn = document.getElementById('checkBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const loading = document.getElementById('loading');
+        const stats = document.getElementById('stats');
+        const issues = document.getElementById('issues');
+        const issuesList = document.getElementById('issuesList');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+
+        checkBtn.addEventListener('click', async () => {
+            const text = inputText.value.trim();
+            
+            if (!text) {
+                showError('Please enter some text to check.');
+                return;
+            }
+
+            hideMessages();
+            loading.classList.add('show');
+            checkBtn.disabled = true;
+            stats.classList.remove('show');
+            issues.classList.remove('show');
+
+            try {
+                const response = await fetch('/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    outputText.value = data.corrected;
+                    
+                    // Update stats
+                    document.getElementById('spellingCount').textContent = 
+                        data.spelling_fixed ? '1+' : '0';
+                    document.getElementById('grammarCount').textContent = 
+                        data.grammar_issues;
+                    stats.classList.add('show');
+
+                    // Show issues
+                    if (data.issues && data.issues.length > 0) {
+                        issuesList.innerHTML = '';
+                        data.issues.forEach(issue => {
+                            const div = document.createElement('div');
+                            div.className = 'issue-item';
+                            div.innerHTML = `
+                                <div class="issue-message">${issue.message}</div>
+                                <div class="issue-suggestions">
+                                    ${issue.replacements.length > 0 
+                                        ? 'Suggestions: ' + issue.replacements.join(', ')
+                                        : 'No suggestions available'}
+                                </div>
+                            `;
+                            issuesList.appendChild(div);
+                        });
+                        issues.classList.add('show');
+                    }
+
+                    if (data.original === data.corrected) {
+                        showSuccess('✅ No errors found! Your text looks great.');
+                    } else {
+                        showSuccess('✅ Text corrected successfully!');
+                    }
+                } else {
+                    showError(data.error || 'An error occurred while checking the text.');
+                }
+            } catch (error) {
+                showError('Failed to connect to the server. Please try again.');
+            } finally {
+                loading.classList.remove('show');
+                checkBtn.disabled = false;
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            stats.classList.remove('show');
+            issues.classList.remove('show');
+            hideMessages();
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (outputText.value) {
+                outputText.select();
+                document.execCommand('copy');
+                showSuccess('📋 Copied to clipboard!');
+                setTimeout(hideMessages, 2000);
+            } else {
+                showError('Nothing to copy!');
+            }
+        });
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+        }
+
+        function showSuccess(message) {
+            successMsg.textContent = message;
+            successMsg.classList.add('show');
+        }
+
+        function hideMessages() {
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+        }
+
+        // Allow Enter key to check (Ctrl+Enter)
+        inputText.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                checkBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
